@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS `user` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+  `username` VARCHAR(50) NOT NULL COMMENT '用户名',
+  `password` VARCHAR(255) NOT NULL COMMENT '密码(需加密存储)',
+  `salt` VARCHAR(50) DEFAULT NULL COMMENT '密码加盐',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+CREATE TABLE IF NOT EXISTS `product` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '商品ID',
+  `product_name` VARCHAR(100) NOT NULL COMMENT '商品名称',
+  `product_detail` LONGTEXT COMMENT '商品详情',
+  `price` DECIMAL(10,2) NOT NULL COMMENT '商品价格',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品表';
+
+CREATE TABLE IF NOT EXISTS `inventory` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '库存ID',
+  `product_id` BIGINT NOT NULL COMMENT '商品ID',
+  `total_stock` INT NOT NULL DEFAULT 0 COMMENT '总库存',
+  `available_stock` INT NOT NULL DEFAULT 0 COMMENT '可用库存',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存表';
+
+CREATE TABLE IF NOT EXISTS `order_info` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `product_id` BIGINT NOT NULL COMMENT '商品ID',
+  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '订单状态：0-新建未支付，1-已支付，2-已发货',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
