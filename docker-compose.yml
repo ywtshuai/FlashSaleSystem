@@ -1,0 +1,119 @@
+version: "3.9"
+
+services:
+  mysql-master:
+    image: mysql:8.0
+    container_name: flashsale-mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: flash_sale_system
+    ports:
+      - "3306:3306"
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+    volumes:
+      - mysql-master-data:/var/lib/mysql
+
+  mysql-slave:
+    image: mysql:8.0
+    container_name: flashsale-mysql-slave
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: flash_sale_system
+    ports:
+      - "3307:3306"
+    command:
+      - --server-id=2
+      - --relay-log=mysql-relay-bin
+      - --read-only=1
+    volumes:
+      - mysql-slave-data:/var/lib/mysql
+
+  redis:
+    image: redis:7.2
+    container_name: flashsale-redis
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: flashsale-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: flashsale-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  app1:
+    build: .
+    container_name: flashsale-app1
+    depends_on:
+      - mysql-master
+      - mysql-slave
+      - redis
+      - kafka
+    environment:
+      SERVER_PORT: 8080
+      MASTER_DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      MASTER_DB_USERNAME: root
+      MASTER_DB_PASSWORD: 123456
+      SLAVE_DB_URL: jdbc:mysql://mysql-slave:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      SLAVE_DB_USERNAME: root
+      SLAVE_DB_PASSWORD: 123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8080:8080"
+
+  app2:
+    build: .
+    container_name: flashsale-app2
+    depends_on:
+      - mysql-master
+      - mysql-slave
+      - redis
+      - kafka
+    environment:
+      SERVER_PORT: 8080
+      MASTER_DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      MASTER_DB_USERNAME: root
+      MASTER_DB_PASSWORD: 123456
+      SLAVE_DB_URL: jdbc:mysql://mysql-slave:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      SLAVE_DB_USERNAME: root
+      SLAVE_DB_PASSWORD: 123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  nginx:
+    image: nginx:1.27
+    container_name: flashsale-nginx
+    depends_on:
+      - app1
+      - app2
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/nginx/html:/usr/share/nginx/html:ro
+
+volumes:
+  mysql-master-data:
+  mysql-slave-data:

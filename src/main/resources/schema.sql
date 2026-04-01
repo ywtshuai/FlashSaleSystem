@@ -22,15 +22,25 @@ CREATE TABLE IF NOT EXISTS `inventory` (
   `product_id` BIGINT NOT NULL COMMENT '商品ID',
   `total_stock` INT NOT NULL DEFAULT 0 COMMENT '总库存',
   `available_stock` INT NOT NULL DEFAULT 0 COMMENT '可用库存',
+  `version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存表';
 
 CREATE TABLE IF NOT EXISTS `order_info` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+  `id` BIGINT NOT NULL COMMENT '订单ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `product_id` BIGINT NOT NULL COMMENT '商品ID',
   `status` TINYINT NOT NULL DEFAULT 0 COMMENT '订单状态：0-新建未支付，1-已支付，2-已发货',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_product` (`user_id`, `product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
+
+INSERT INTO `product` (`id`, `product_name`, `product_detail`, `price`)
+SELECT 1, '限量耳机', '课程作业演示商品：无线降噪耳机', 599.00
+WHERE NOT EXISTS (SELECT 1 FROM `product` WHERE `id` = 1);
+
+INSERT INTO `inventory` (`product_id`, `total_stock`, `available_stock`, `version`)
+SELECT 1, 20, 20, 0
+WHERE NOT EXISTS (SELECT 1 FROM `inventory` WHERE `product_id` = 1);

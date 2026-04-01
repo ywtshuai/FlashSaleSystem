@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Sale Demo</title>
+    <style>
+        :root {
+            --bg: #f4efe8;
+            --panel: rgba(255, 251, 245, 0.92);
+            --text: #1f1b16;
+            --accent: #c24f2a;
+            --accent-dark: #7f2f17;
+            --border: rgba(31, 27, 22, 0.12);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(194, 79, 42, 0.18), transparent 35%),
+                radial-gradient(circle at bottom right, rgba(127, 47, 23, 0.22), transparent 28%),
+                linear-gradient(135deg, #efe3d2, #f9f6f1 55%, #e8ded0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+        .panel {
+            width: min(920px, 100%);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 24px 70px rgba(56, 39, 25, 0.14);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        .hero, .content { padding: 28px; }
+        .hero {
+            background: linear-gradient(180deg, rgba(194, 79, 42, 0.94), rgba(127, 47, 23, 0.95));
+            color: #fff8ef;
+        }
+        .hero h1 { margin: 0 0 12px; font-size: 36px; }
+        .hero p { margin: 0 0 14px; line-height: 1.6; }
+        .badge {
+            display: inline-block;
+            margin-bottom: 16px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.24);
+        }
+        .content h2 { margin-top: 0; }
+        input, button {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 15px;
+        }
+        input { margin-bottom: 12px; background: #fff; }
+        button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        button:hover { transform: translateY(-1px); background: var(--accent-dark); }
+        .secondary { margin-top: 10px; background: #2d2c2a; }
+        .card {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(255,255,255,0.74);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        .log {
+            white-space: pre-wrap;
+            min-height: 88px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .tips {
+            margin-top: 16px;
+            color: rgba(31, 27, 22, 0.72);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="panel">
+    <section class="hero">
+        <div class="badge">MuseLens / FlashSaleSystem Demo</div>
+        <h1>分布式秒杀演示页</h1>
+        <p>这张页面由 Nginx 直接托管，动态请求再转发给后端服务集群。登录后可以查看商品、发起秒杀，并轮询秒杀结果。</p>
+        <p>默认演示商品 ID 为 <strong>1</strong>，如果你使用了初始化脚本，会看到课程作业用的“限量耳机”。</p>
+    </section>
+    <section class="content">
+        <h2>快速体验</h2>
+        <input id="username" placeholder="用户名，例如 test1">
+        <input id="password" placeholder="密码，例如 123456" type="password">
+        <button onclick="login()">登录</button>
+        <button class="secondary" onclick="loadProduct()">查询商品详情</button>
+        <button class="secondary" onclick="startSeckill()">立即秒杀</button>
+
+        <div class="card">
+            <strong>运行日志</strong>
+            <div id="log" class="log">等待操作...</div>
+        </div>
+        <div class="tips">
+            建议先注册一个用户，再登录；登录成功后页面会自动带上 Bearer Token 请求 `/api/products/1`、`/api/seckill/1` 和 `/api/seckill/result`。
+        </div>
+    </section>
+</div>
+
+<script>
+    let token = "";
+    let pollTimer = null;
+
+    function writeLog(message) {
+        document.getElementById("log").textContent = message;
+    }
+
+    async function request(url, options = {}) {
+        const headers = options.headers || {};
+        if (token) {
+            headers["Authorization"] = "Bearer " + token;
+        }
+        headers["Content-Type"] = "application/json";
+        const response = await fetch(url, { ...options, headers });
+        return response.json();
+    }
+
+    async function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const result = await request("/api/users/login", {
+            method: "POST",
+            body: JSON.stringify({ username, password })
+        });
+        if (result.code !== 200) {
+            writeLog("登录失败: " + result.message);
+            return;
+        }
+        token = result.data.token;
+        writeLog("登录成功，用户: " + result.data.username);
+    }
+
+    async function loadProduct() {
+        const result = await request("/api/products/1", { method: "GET" });
+        if (result.code !== 200) {
+            writeLog("商品查询失败: " + result.message);
+            return;
+        }
+        writeLog("商品详情:\n" + JSON.stringify(result.data, null, 2));
+    }
+
+    async function startSeckill() {
+        const result = await request("/api/seckill/1", { method: "POST" });
+        if (result.code !== 200) {
+            writeLog("秒杀请求失败: " + result.message);
+            return;
+        }
+        writeLog("秒杀请求已提交，开始轮询结果...\n" + JSON.stringify(result.data, null, 2));
+        clearInterval(pollTimer);
+        pollTimer = setInterval(checkResult, 1500);
+    }
+
+    async function checkResult() {
+        const result = await request("/api/seckill/result?productId=1", { method: "GET" });
+        if (result.code !== 200) {
+            writeLog("结果查询失败: " + result.message);
+            clearInterval(pollTimer);
+            return;
+        }
+        writeLog("秒杀结果:\n" + JSON.stringify(result.data, null, 2));
+        if (result.data.status !== "QUEUING") {
+            clearInterval(pollTimer);
+        }
+    }
+</script>
+</body>
+</html>

@@ -17,4 +17,6 @@ public class Inventory {
     private Integer totalStock;
 
     private Integer availableStock;
+
+    private Integer version;
 }

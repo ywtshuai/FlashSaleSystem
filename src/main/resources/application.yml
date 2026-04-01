@@ -1,20 +1,26 @@
-﻿server:
-  port: 8080
+server:
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: flash-sale-system
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    master:
+      driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+      url: ${MASTER_DB_URL:jdbc:mysql://localhost:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+      username: ${MASTER_DB_USERNAME:root}
+      password: ${MASTER_DB_PASSWORD:123456}
+    slave:
+      driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+      url: ${SLAVE_DB_URL:jdbc:mysql://localhost:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+      username: ${SLAVE_DB_USERNAME:root}
+      password: ${SLAVE_DB_PASSWORD:123456}
   data:
     redis:
-      host: localhost
-      port: 6379
-      database: 0
-      timeout: 3000ms
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DB:0}
+      timeout: ${REDIS_TIMEOUT:3000ms}
       lettuce:
         pool:
           max-active: 8
@@ -25,6 +31,19 @@ spring:
     init:
       mode: always
       encoding: UTF-8
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: flash-sale-order-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.flashsale.dto
+        spring.json.value.default.type: com.flashsale.dto.SeckillOrderMessage
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 mybatis-plus:
   configuration:
@@ -32,9 +51,13 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
-      id-type: auto
+      id-type: input
   mapper-locations: classpath:/mapper/**/*.xml
 
 jwt:
   secret: FlashSaleSystemJwtSecretKey2026FlashSaleSystem
-  expiration: 7200000
+  expiration: ${JWT_EXPIRATION:7200000}
+
+flash-sale:
+  kafka:
+    seckill-topic: flash-sale-seckill-topic

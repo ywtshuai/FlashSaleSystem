@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @TableName("order_info")
 public class OrderInfo {
 
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.INPUT)
     private Long id;
 
     private Long userId;

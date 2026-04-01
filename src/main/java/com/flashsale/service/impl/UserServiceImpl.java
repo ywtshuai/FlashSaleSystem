@@ -1,6 +1,7 @@
 package com.flashsale.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.flashsale.config.ReadOnlyRoute;
 import com.flashsale.dto.LoginRequest;
 import com.flashsale.dto.RegisterRequest;
 import com.flashsale.dto.UserInfoResponse;
@@ -68,6 +69,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @ReadOnlyRoute
     public UserInfoResponse getCurrentUser(Long userId) {
         User user = userMapper.selectById(userId);
         if (user == null) {

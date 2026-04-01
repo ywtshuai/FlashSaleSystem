@@ -1,5 +1,6 @@
 package com.flashsale.service.impl;
 
+import com.flashsale.config.ReadOnlyRoute;
 import com.flashsale.entity.Product;
 import com.flashsale.exception.BusinessException;
 import com.flashsale.mapper.ProductMapper;
@@ -48,6 +49,7 @@ public class ProductServiceImpl implements ProductService {
      * 4. 写缓存时使用“固定 TTL + 随机 TTL”，避免大量缓存在同一时间一起失效，防止缓存雪崩。
      */
     @Override
+    @ReadOnlyRoute
     public Product getProductById(Long id) {
         String cacheKey = PRODUCT_CACHE_KEY_PREFIX + id;
         String cachedValue = redisTemplate.opsForValue().get(cacheKey);
