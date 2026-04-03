@@ -33,8 +33,6 @@ spring:
       encoding: UTF-8
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    listener:
-      ack-mode: record
     consumer:
       group-id: flash-sale-order-group
       auto-offset-reset: earliest
@@ -63,6 +61,3 @@ jwt:
 flash-sale:
   kafka:
     seckill-topic: flash-sale-seckill-topic
-    seckill-dlt-topic: flash-sale-seckill-topic-dlt
-    retry-interval: 1000
-    max-attempts: 3

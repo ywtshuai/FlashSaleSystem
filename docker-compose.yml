@@ -15,7 +15,6 @@ services:
       - --binlog-format=ROW
     volumes:
       - mysql-master-data:/var/lib/mysql
-      - ./deploy/mysql/master/init:/docker-entrypoint-initdb.d:ro
 
   mysql-slave:
     image: mysql:8.0
@@ -31,7 +30,6 @@ services:
       - --read-only=1
     volumes:
       - mysql-slave-data:/var/lib/mysql
-      - ./deploy/mysql/slave/init:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:7.2

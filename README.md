@@ -6,7 +6,6 @@
 - Phase 0：修复测试基线，调整 MyBatis 扫描边界，补齐订单/库存持久层骨架
 - Phase 1：落地单体版秒杀核心链路，支持 Redis 预扣、Kafka 异步下单、幂等兜底、Snowflake 订单 ID、结果查询
 - Phase 2：补齐课程演示所需的 Docker、docker-compose、Nginx 静态页与 API 反向代理、读写分离骨架和压测说明
-- Continue：补齐 Kafka 重试 / 死信队列骨架、主从复制初始化脚本、秒杀主链路单元测试
 
 ## 核心能力
 
@@ -17,7 +16,6 @@
 - 订单查询 `GET /api/orders/{orderId}`
 - Redis Lua 原子判重与预扣库存
 - Kafka 异步削峰，消费者落库订单与库存
-- Kafka 失败重试和死信队列兜底补偿
 - MySQL 唯一索引 `uk_user_product` 做最终幂等兜底
 - `AbstractRoutingDataSource + @ReadOnlyRoute` 读写分离骨架
 
@@ -26,7 +24,7 @@
 ```text
 src/main/java/com/flashsale
 ├── common        通用返回模型
-├── config        MyBatis、数据源、Kafka、读写路由、Web 配置
+├── config        MyBatis、数据源、读写路由、Web 配置
 ├── controller    用户、商品、秒杀、订单接口
 ├── dto           登录、秒杀、订单相关 DTO
 ├── entity        user/product/inventory/order_info 实体
@@ -75,7 +73,6 @@ java -jar target/flash-sale-system-0.0.1-SNAPSHOT.jar
 - [docker-compose.yml](docker-compose.yml)
 - [Nginx 配置](deploy/nginx/default.conf)
 - [静态演示页](deploy/nginx/html/index.html)
-- [主从复制说明](deploy/mysql/replication-setup.md)
 
 启动方式：
 
@@ -163,8 +160,7 @@ Authorization: Bearer <token>
 - Redis 集合防止同用户重复抢同商品
 - MySQL `uk_user_product(user_id, product_id)` 做最终兜底
 - Kafka 发送失败时回补 Redis 库存和用户占位
-- Kafka 消费异常会先重试，超过次数后进入 DLT
-- DLT 处理器会统一回补 Redis 预扣并写失败结果
+- 消费失败时写失败结果并回补 Redis 预扣
 
 ### 读写分离
 
@@ -183,17 +179,11 @@ mvn test
 当前已验证：
 - `UserControllerTest`
 - `SnowflakeIdGeneratorTest`
-- `SeckillServiceImplTest`
-- `SeckillOrderConsumerTest`
 
 ## 压测说明
 
 压测建议见 [docs/jmeter-guide.md](docs/jmeter-guide.md)。
 
-## 主从复制说明
-
-如果你需要实际演示主从读写分离，可以按照 [deploy/mysql/replication-setup.md](deploy/mysql/replication-setup.md) 完成复制绑定。
-
 ## 后续演进
 
-当前仓库已经完成课程作业版单体闭环、演示部署、Kafka 重试/死信骨架和基础主从复制脚本。下一步如果要继续推进，可以把订单与库存拆成独立微服务，并把自动化集成测试和更完整的最终一致性机制继续细化。
+当前仓库已经完成课程作业版单体闭环和演示部署。下一步如果要继续推进，可以把订单与库存拆成独立微服务，并把 Kafka 补偿、死信队列和更完整的最终一致性机制继续细化。
