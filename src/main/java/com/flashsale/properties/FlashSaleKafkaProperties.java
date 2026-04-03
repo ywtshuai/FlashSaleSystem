@@ -10,4 +10,7 @@ import org.springframework.stereotype.Component;
 public class FlashSaleKafkaProperties {
 
     private String seckillTopic;
+    private String seckillDltTopic;
+    private Long retryInterval = 1000L;
+    private Integer maxAttempts = 3;
 }

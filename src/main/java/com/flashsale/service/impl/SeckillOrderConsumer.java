@@ -6,9 +6,12 @@ import com.flashsale.entity.OrderInfo;
 import com.flashsale.service.InventoryService;
 import com.flashsale.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.kafka.support.KafkaHeaders;
 
 @Component
 @RequiredArgsConstructor
@@ -41,11 +44,14 @@ public class SeckillOrderConsumer {
             }
             seckillService.rollbackRedisReservation(userId, productId);
             seckillService.markFailed(userId, productId, exception.getMessage());
-            throw exception;
         } catch (Exception exception) {
-            seckillService.rollbackRedisReservation(userId, productId);
-            seckillService.markFailed(userId, productId, "系统繁忙");
             throw exception;
         }
+    }
+
+    @DltHandler
+    public void handleDlt(SeckillOrderMessage message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        seckillService.rollbackRedisReservation(message.getUserId(), message.getProductId());
+        seckillService.markFailed(message.getUserId(), message.getProductId(), "系统繁忙，已进入死信队列:" + topic);
     }
 }
