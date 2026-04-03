@@ -6,7 +6,7 @@
 - Phase 0：修复测试基线，调整 MyBatis 扫描边界，补齐订单/库存持久层骨架
 - Phase 1：落地单体版秒杀核心链路，支持 Redis 预扣、Kafka 异步下单、幂等兜底、Snowflake 订单 ID、结果查询
 - Phase 2：补齐课程演示所需的 Docker、docker-compose、Nginx 静态页与 API 反向代理、读写分离骨架和压测说明
-- Continue：补齐 Kafka 重试 / 死信队列骨架、主从复制初始化脚本、秒杀主链路单元测试
+- Continue：补齐 Kafka 重试 / 死信队列骨架、主从复制初始化脚本、秒杀主链路单元测试、Testcontainers 端到端集成测试
 
 ## 核心能力
 
@@ -20,6 +20,7 @@
 - Kafka 失败重试和死信队列兜底补偿
 - MySQL 唯一索引 `uk_user_product` 做最终幂等兜底
 - `AbstractRoutingDataSource + @ReadOnlyRoute` 读写分离骨架
+- Testcontainers 驱动的真实链路集成测试
 
 ## 目录结构
 
@@ -185,6 +186,11 @@ mvn test
 - `SnowflakeIdGeneratorTest`
 - `SeckillServiceImplTest`
 - `SeckillOrderConsumerTest`
+- `SeckillFlowIntegrationTest`
+
+说明：
+- `SeckillFlowIntegrationTest` 基于 Testcontainers 启动 MySQL、Redis、Kafka
+- 如果运行环境没有 Docker，该集成测试会自动跳过，不影响普通单元测试
 
 ## 压测说明
 
@@ -196,4 +202,4 @@ mvn test
 
 ## 后续演进
 
-当前仓库已经完成课程作业版单体闭环、演示部署、Kafka 重试/死信骨架和基础主从复制脚本。下一步如果要继续推进，可以把订单与库存拆成独立微服务，并把自动化集成测试和更完整的最终一致性机制继续细化。
+当前仓库已经完成课程作业版单体闭环、演示部署、Kafka 重试/死信骨架、基础主从复制脚本和真实链路集成测试。下一步如果要继续推进，可以补 Kafka DLT 观测指标、主从自动绑定脚本，或继续拆订单与库存微服务。
