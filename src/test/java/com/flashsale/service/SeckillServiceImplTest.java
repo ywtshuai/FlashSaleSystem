@@ -42,6 +42,9 @@ class SeckillServiceImplTest {
     private SeckillProducer seckillProducer;
 
     @Mock
+    private SeckillMetricsService seckillMetricsService;
+
+    @Mock
     private ValueOperations<String, String> valueOperations;
 
     @Mock
@@ -51,7 +54,7 @@ class SeckillServiceImplTest {
 
     @Test
     void shouldQueueSeckillRequestWhenLuaSucceeds() {
-        seckillService = new SeckillServiceImpl(redisTemplate, inventoryService, orderService, idGenerator, seckillProducer);
+        seckillService = new SeckillServiceImpl(redisTemplate, inventoryService, orderService, idGenerator, seckillProducer, seckillMetricsService);
         when(redisTemplate.execute(any(), anyList(), anyString(), anyString())).thenReturn(1L);
         when(idGenerator.nextId()).thenReturn(123456L);
 
@@ -66,7 +69,7 @@ class SeckillServiceImplTest {
 
     @Test
     void shouldRollbackRedisReservationWhenProducerFails() {
-        seckillService = new SeckillServiceImpl(redisTemplate, inventoryService, orderService, idGenerator, seckillProducer);
+        seckillService = new SeckillServiceImpl(redisTemplate, inventoryService, orderService, idGenerator, seckillProducer, seckillMetricsService);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.opsForSet()).thenReturn(setOperations);
         when(redisTemplate.execute(any(), anyList(), anyString(), anyString())).thenReturn(1L);
@@ -83,7 +86,7 @@ class SeckillServiceImplTest {
 
     @Test
     void shouldReadSuccessResultFromDatabaseWhenRedisResultMissing() {
-        seckillService = new SeckillServiceImpl(redisTemplate, inventoryService, orderService, idGenerator, seckillProducer);
+        seckillService = new SeckillServiceImpl(redisTemplate, inventoryService, orderService, idGenerator, seckillProducer, seckillMetricsService);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setId(888L);

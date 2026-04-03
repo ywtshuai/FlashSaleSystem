@@ -29,6 +29,9 @@ class SeckillOrderConsumerTest {
     @Mock
     private SeckillServiceImpl seckillService;
 
+    @Mock
+    private SeckillMetricsService seckillMetricsService;
+
     @InjectMocks
     private SeckillOrderConsumer consumer;
 

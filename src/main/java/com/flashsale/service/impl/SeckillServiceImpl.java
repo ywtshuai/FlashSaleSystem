@@ -7,6 +7,7 @@ import com.flashsale.entity.OrderInfo;
 import com.flashsale.exception.BusinessException;
 import com.flashsale.service.IdGenerator;
 import com.flashsale.service.InventoryService;
+import com.flashsale.service.SeckillMetricsService;
 import com.flashsale.service.OrderService;
 import com.flashsale.service.SeckillProducer;
 import com.flashsale.service.SeckillService;
@@ -55,6 +56,7 @@ public class SeckillServiceImpl implements SeckillService {
     private final OrderService orderService;
     private final IdGenerator idGenerator;
     private final SeckillProducer seckillProducer;
+    private final SeckillMetricsService seckillMetricsService;
 
     @Override
     public SeckillRequestResponse execute(Long userId, Long productId) {
@@ -95,7 +97,9 @@ public class SeckillServiceImpl implements SeckillService {
 
         try {
             seckillProducer.send(message);
+            seckillMetricsService.recordQueued(message);
         } catch (Exception exception) {
+            seckillMetricsService.recordProducerFailure(message, "消息投递失败");
             markFailed(userId, productId, "消息投递失败");
             rollbackRedisReservation(userId, productId);
             throw new BusinessException("秒杀排队失败，请稍后重试");

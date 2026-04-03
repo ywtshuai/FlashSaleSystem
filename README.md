@@ -6,7 +6,7 @@
 - Phase 0：修复测试基线，调整 MyBatis 扫描边界，补齐订单/库存持久层骨架
 - Phase 1：落地单体版秒杀核心链路，支持 Redis 预扣、Kafka 异步下单、幂等兜底、Snowflake 订单 ID、结果查询
 - Phase 2：补齐课程演示所需的 Docker、docker-compose、Nginx 静态页与 API 反向代理、读写分离骨架和压测说明
-- Continue：补齐 Kafka 重试 / 死信队列骨架、主从复制初始化脚本、秒杀主链路单元测试、Testcontainers 端到端集成测试
+- Continue：补齐 Kafka 重试 / 死信队列骨架、主从复制初始化脚本、秒杀主链路单元测试、Testcontainers 端到端集成测试、Kafka 观测指标
 
 ## 核心能力
 
@@ -15,9 +15,11 @@
 - 秒杀接口 `POST /api/seckill/{productId}`
 - 秒杀结果查询 `GET /api/seckill/result?productId=1`
 - 订单查询 `GET /api/orders/{orderId}`
+- 秒杀观测接口 `GET /api/admin/observability/seckill`
 - Redis Lua 原子判重与预扣库存
 - Kafka 异步削峰，消费者落库订单与库存
 - Kafka 失败重试和死信队列兜底补偿
+- Kafka 链路内置内存指标聚合与最近死信事件观测
 - MySQL 唯一索引 `uk_user_product` 做最终幂等兜底
 - `AbstractRoutingDataSource + @ReadOnlyRoute` 读写分离骨架
 - Testcontainers 驱动的真实链路集成测试
@@ -28,8 +30,8 @@
 src/main/java/com/flashsale
 ├── common        通用返回模型
 ├── config        MyBatis、数据源、Kafka、读写路由、Web 配置
-├── controller    用户、商品、秒杀、订单接口
-├── dto           登录、秒杀、订单相关 DTO
+├── controller    用户、商品、秒杀、订单、观测接口
+├── dto           登录、秒杀、订单、观测相关 DTO
 ├── entity        user/product/inventory/order_info 实体
 ├── exception     业务异常
 ├── handler       全局异常处理
@@ -37,7 +39,7 @@ src/main/java/com/flashsale
 ├── mapper        MyBatis-Plus Mapper
 ├── properties    JWT、Kafka 自定义配置
 ├── service       业务接口
-├── service/impl  用户、商品、库存、订单、秒杀实现
+├── service/impl  用户、商品、库存、订单、秒杀、指标实现
 └── util          JWT、密码、Redis Key 等工具类
 ```
 
@@ -98,23 +100,9 @@ docker-compose up --build
 
 `POST /api/users/register`
 
-```json
-{
-  "username": "test1",
-  "password": "123456"
-}
-```
-
 ### 2. 用户登录
 
 `POST /api/users/login`
-
-```json
-{
-  "username": "test1",
-  "password": "123456"
-}
-```
 
 登录成功后，把返回的 token 放入请求头：
 
@@ -130,24 +118,28 @@ Authorization: Bearer <token>
 
 `POST /api/seckill/1`
 
-可能返回：
-- `排队中`
-- `已售罄`
-- `请勿重复秒杀`
-
 ### 5. 查询秒杀结果
 
 `GET /api/seckill/result?productId=1`
 
-可能状态：
-- `QUEUING`
-- `SUCCESS`
-- `FAIL`
-- `EMPTY`
-
 ### 6. 查询订单
 
 `GET /api/orders/{orderId}`
+
+### 7. 查询秒杀观测指标
+
+`GET /api/admin/observability/seckill`
+
+返回内容包括：
+- 已进入队列的秒杀请求数
+- 生产者失败次数
+- 消费成功次数
+- 消费业务失败次数
+- 消费可重试失败次数
+- DLT 消息数
+- 平均消费耗时
+- 最近一次排队 / 成功 / 失败事件
+- 最近 10 条死信事件
 
 ## 关键实现说明
 
@@ -166,6 +158,13 @@ Authorization: Bearer <token>
 - Kafka 发送失败时回补 Redis 库存和用户占位
 - Kafka 消费异常会先重试，超过次数后进入 DLT
 - DLT 处理器会统一回补 Redis 预扣并写失败结果
+
+### Kafka 观测指标
+
+- `InMemorySeckillMetricsService` 负责统计排队、失败、成功和 DLT 事件
+- `SeckillOrderConsumer` 会记录消费成功、业务失败、可重试失败和 DLT 事件
+- `SeckillServiceImpl` 会记录排队成功和消息投递失败
+- 当前采用内存级统计，适合课程作业和单实例演示；多实例场景后续可迁移到 Prometheus / Redis
 
 ### 读写分离
 
@@ -186,6 +185,7 @@ mvn test
 - `SnowflakeIdGeneratorTest`
 - `SeckillServiceImplTest`
 - `SeckillOrderConsumerTest`
+- `InMemorySeckillMetricsServiceTest`
 - `SeckillFlowIntegrationTest`
 
 说明：
@@ -202,4 +202,4 @@ mvn test
 
 ## 后续演进
 
-当前仓库已经完成课程作业版单体闭环、演示部署、Kafka 重试/死信骨架、基础主从复制脚本和真实链路集成测试。下一步如果要继续推进，可以补 Kafka DLT 观测指标、主从自动绑定脚本，或继续拆订单与库存微服务。
+当前仓库已经完成课程作业版单体闭环、演示部署、Kafka 重试/死信骨架、基础主从复制脚本、真实链路集成测试和 Kafka 观测指标。下一步如果要继续推进，可以补主从自动绑定脚本，或继续拆订单与库存微服务。
