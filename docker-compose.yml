@@ -66,12 +66,14 @@ services:
     build: .
     container_name: flashsale-app1
     depends_on:
-      - mysql-master
-      - mysql-slave
+      - order-service
+      - inventory-service
       - redis
       - kafka
     environment:
+      APP_NAME: user-product-service
       SERVER_PORT: 8080
+      FLASH_SALE_MICROSERVICE_ENABLED: true
       MASTER_DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
       MASTER_DB_USERNAME: root
       MASTER_DB_PASSWORD: 123456
@@ -81,6 +83,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      ORDER_SERVICE_URL: http://order-service:8081
+      INVENTORY_SERVICE_URL: http://inventory-service:8082
     ports:
       - "8080:8080"
 
@@ -88,12 +92,14 @@ services:
     build: .
     container_name: flashsale-app2
     depends_on:
-      - mysql-master
-      - mysql-slave
+      - order-service
+      - inventory-service
       - redis
       - kafka
     environment:
+      APP_NAME: user-product-service
       SERVER_PORT: 8080
+      FLASH_SALE_MICROSERVICE_ENABLED: true
       MASTER_DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
       MASTER_DB_USERNAME: root
       MASTER_DB_PASSWORD: 123456
@@ -103,6 +109,41 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      ORDER_SERVICE_URL: http://order-service:8081
+      INVENTORY_SERVICE_URL: http://inventory-service:8082
+
+  inventory-service:
+    build: ./services/inventory-service
+    container_name: flashsale-inventory-service
+    depends_on:
+      - mysql-master
+    environment:
+      SERVER_PORT: 8082
+      DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      DB_USERNAME: root
+      DB_PASSWORD: 123456
+    ports:
+      - "8082:8082"
+
+  order-service:
+    build: ./services/order-service
+    container_name: flashsale-order-service
+    depends_on:
+      - mysql-master
+      - kafka
+      - redis
+      - inventory-service
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      DB_USERNAME: root
+      DB_PASSWORD: 123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INVENTORY_SERVICE_URL: http://inventory-service:8082
+    ports:
+      - "8081:8081"
 
   nginx:
     image: nginx:1.27

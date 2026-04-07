@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: flash-sale-system
+    name: ${APP_NAME:user-product-service}
   datasource:
     master:
       driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
@@ -61,8 +61,13 @@ jwt:
   expiration: ${JWT_EXPIRATION:7200000}
 
 flash-sale:
+  microservice:
+    enabled: ${FLASH_SALE_MICROSERVICE_ENABLED:false}
   kafka:
     seckill-topic: flash-sale-seckill-topic
     seckill-dlt-topic: flash-sale-seckill-topic-dlt
     retry-interval: 1000
     max-attempts: 3
+  services:
+    order-service-url: ${ORDER_SERVICE_URL:http://localhost:8081}
+    inventory-service-url: ${INVENTORY_SERVICE_URL:http://localhost:8082}

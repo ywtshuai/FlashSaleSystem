@@ -89,6 +89,7 @@ class SeckillOrderConsumerTest {
         message.setUserId(1L);
         message.setProductId(1L);
         message.setOrderId(10001L);
+        message.setTimestamp(System.currentTimeMillis());
         return message;
     }
 }

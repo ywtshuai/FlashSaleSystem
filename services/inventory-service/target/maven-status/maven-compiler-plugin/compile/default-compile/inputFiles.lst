@@ -1,0 +1,8 @@
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\config\MybatisPlusConfig.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\controller\InternalInventoryController.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\entity\Inventory.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\exception\BusinessException.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\handler\GlobalExceptionHandler.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\InventoryServiceApplication.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\mapper\InventoryMapper.java
+E:\FlashSaleSystem\services\inventory-service\src\main\java\com\flashsale\inventory\service\InventoryApplicationService.java

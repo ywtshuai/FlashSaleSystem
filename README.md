@@ -7,170 +7,102 @@
 - Phase 1：落地单体版秒杀核心链路，支持 Redis 预扣、Kafka 异步下单、幂等兜底、Snowflake 订单 ID、结果查询
 - Phase 2：补齐课程演示所需的 Docker、docker-compose、Nginx 静态页与 API 反向代理、读写分离骨架和压测说明
 - Continue：补齐 Kafka 重试 / 死信队列骨架、主从复制初始化脚本、秒杀主链路单元测试、Testcontainers 端到端集成测试、Kafka 观测指标
+- Next：完成 `user-product-service + order-service + inventory-service` 微服务拆分第一版
+- Current：微服务拆分第一版已完成基础联调骨架，三个服务均可独立打包
 
-## 核心能力
+## 当前架构
 
-- 用户注册、登录、JWT 鉴权
-- 商品详情缓存，具备缓存穿透、击穿、雪崩防护
-- 秒杀接口 `POST /api/seckill/{productId}`
-- 秒杀结果查询 `GET /api/seckill/result?productId=1`
-- 订单查询 `GET /api/orders/{orderId}`
-- 秒杀观测接口 `GET /api/admin/observability/seckill`
-- Redis Lua 原子判重与预扣库存
-- Kafka 异步削峰，消费者落库订单与库存
-- Kafka 失败重试和死信队列兜底补偿
-- Kafka 链路内置内存指标聚合与最近死信事件观测
-- MySQL 唯一索引 `uk_user_product` 做最终幂等兜底
-- `AbstractRoutingDataSource + @ReadOnlyRoute` 读写分离骨架
-- Testcontainers 驱动的真实链路集成测试
+### 1. user-product-service
+- 保留用户注册、登录、JWT 鉴权
+- 保留商品详情缓存查询
+- 保留秒杀入口、结果查询、观测接口
+- 负责 Redis 预扣、发送 Kafka 消息
+- 微服务模式下通过 HTTP 调用 `order-service` 和 `inventory-service`
 
-## 目录结构
+### 2. order-service
+- 独立消费 Kafka 秒杀消息
+- 创建订单记录
+- 更新 Redis 秒杀结果
+- 对外提供内部订单查询接口
+
+### 3. inventory-service
+- 独立维护库存表
+- 提供库存查询和库存扣减内部接口
+
+## 仓库结构
 
 ```text
-src/main/java/com/flashsale
-├── common        通用返回模型
-├── config        MyBatis、数据源、Kafka、读写路由、Web 配置
-├── controller    用户、商品、秒杀、订单、观测接口
-├── dto           登录、秒杀、订单、观测相关 DTO
-├── entity        user/product/inventory/order_info 实体
-├── exception     业务异常
-├── handler       全局异常处理
-├── interceptor   JWT 鉴权拦截器
-├── mapper        MyBatis-Plus Mapper
-├── properties    JWT、Kafka 自定义配置
-├── service       业务接口
-├── service/impl  用户、商品、库存、订单、秒杀、指标实现
-└── util          JWT、密码、Redis Key 等工具类
+.
+├── src/                        user-product-service 主工程
+├── services/order-service      订单微服务
+├── services/inventory-service  库存微服务
+├── deploy/                     Nginx、MySQL 等部署配置
+├── docs/                       压测与说明文档
+└── docker-compose.yml          三服务联调编排
 ```
 
-## 数据库准备
+## 主要接口
 
-1. 启动 MySQL 8、Redis、Kafka
-2. 创建数据库：
+### 对外接口
+- `POST /api/users/register`
+- `POST /api/users/login`
+- `GET /api/products/{id}`
+- `POST /api/seckill/{productId}`
+- `GET /api/seckill/result?productId=1`
+- `GET /api/orders/{orderId}`
+- `GET /api/admin/observability/seckill`
 
-```sql
-CREATE DATABASE flash_sale_system DEFAULT CHARACTER SET utf8mb4;
-```
+### 内部接口
 
-3. 项目启动时会执行 [schema.sql](src/main/resources/schema.sql)
-4. 初始化脚本会自动插入一条演示商品：
-   - 商品 ID：`1`
-   - 商品名：`限量耳机`
-   - 初始库存：`20`
+`inventory-service`
+- `GET /internal/inventories/{productId}`
+- `GET /internal/inventories/{productId}/stock`
+- `POST /internal/inventories/{productId}/deduct`
 
-## 本地启动
+`order-service`
+- `GET /internal/orders/{orderId}`
+- `GET /internal/orders/exist?userId=...&productId=...`
+- `GET /internal/orders/by-user-product?userId=...&productId=...`
 
-```bash
-mvn spring-boot:run
-```
+## 运行模式
 
-或：
+### 单体兼容模式
+- 默认模式
+- `flash-sale.microservice.enabled=false`
+- root 工程内部仍可本地完成订单/库存处理，方便开发和测试
 
-```bash
-mvn clean package
-java -jar target/flash-sale-system-0.0.1-SNAPSHOT.jar
-```
+### 微服务模式
+- `flash-sale.microservice.enabled=true`
+- root 工程变为 `user-product-service`
+- root 自己的 Kafka 消费器会关闭
+- `order-service` 独立消费 Kafka
+- `inventory-service` 独立处理库存
+
+## 当前验证状态
+
+截至 2026-04-07，已验证：
+- root 工程 `mvn test` 通过
+- root 工程 `mvn clean package -DskipTests` 通过
+- `services/order-service` 可独立执行 `mvn clean package -DskipTests`
+- `services/inventory-service` 可独立执行 `mvn clean package -DskipTests`
+
+这意味着当前仓库已经具备：
+- 单体兼容模式继续开发和测试的能力
+- 微服务模式下按服务分别构建镜像和部署的能力
 
 ## Docker 演示环境
 
-项目根目录已提供：
-- [Dockerfile](Dockerfile)
-- [docker-compose.yml](docker-compose.yml)
-- [Nginx 配置](deploy/nginx/default.conf)
-- [静态演示页](deploy/nginx/html/index.html)
-- [主从复制说明](deploy/mysql/replication-setup.md)
-
-启动方式：
+启动：
 
 ```bash
 docker-compose up --build
 ```
 
-启动后默认入口：
-- Nginx 演示页：`http://localhost`
-- 应用实例 1：`http://localhost:8080`
-- MySQL 主库：`localhost:3306`
-- MySQL 从库：`localhost:3307`
-- Redis：`localhost:6379`
-- Kafka：`localhost:9092`
-
-## 主要接口
-
-### 1. 用户注册
-
-`POST /api/users/register`
-
-### 2. 用户登录
-
-`POST /api/users/login`
-
-登录成功后，把返回的 token 放入请求头：
-
-```text
-Authorization: Bearer <token>
-```
-
-### 3. 商品详情
-
-`GET /api/products/1`
-
-### 4. 发起秒杀
-
-`POST /api/seckill/1`
-
-### 5. 查询秒杀结果
-
-`GET /api/seckill/result?productId=1`
-
-### 6. 查询订单
-
-`GET /api/orders/{orderId}`
-
-### 7. 查询秒杀观测指标
-
-`GET /api/admin/observability/seckill`
-
-返回内容包括：
-- 已进入队列的秒杀请求数
-- 生产者失败次数
-- 消费成功次数
-- 消费业务失败次数
-- 消费可重试失败次数
-- DLT 消息数
-- 平均消费耗时
-- 最近一次排队 / 成功 / 失败事件
-- 最近 10 条死信事件
-
-## 关键实现说明
-
-### 秒杀写链路
-
-1. 用户鉴权后请求秒杀接口
-2. Redis Lua 脚本原子执行判重和库存预扣
-3. 成功后立即返回“排队中”，并发送 Kafka 消息
-4. Kafka 消费者异步扣减 MySQL 库存、创建订单
-5. Redis 写入秒杀结果，前端轮询获取最终状态
-
-### 幂等与一致性
-
-- Redis 集合防止同用户重复抢同商品
-- MySQL `uk_user_product(user_id, product_id)` 做最终兜底
-- Kafka 发送失败时回补 Redis 库存和用户占位
-- Kafka 消费异常会先重试，超过次数后进入 DLT
-- DLT 处理器会统一回补 Redis 预扣并写失败结果
-
-### Kafka 观测指标
-
-- `InMemorySeckillMetricsService` 负责统计排队、失败、成功和 DLT 事件
-- `SeckillOrderConsumer` 会记录消费成功、业务失败、可重试失败和 DLT 事件
-- `SeckillServiceImpl` 会记录排队成功和消息投递失败
-- 当前采用内存级统计，适合课程作业和单实例演示；多实例场景后续可迁移到 Prometheus / Redis
-
-### 读写分离
-
-- 查询接口通过 `@ReadOnlyRoute` 默认路由到从库
-- 写请求默认走主库
-- 当前默认配置里主从都指向同一库，便于本地开发；部署时通过环境变量切换
+主要入口：
+- Nginx：`http://localhost`
+- user-product-service：`http://localhost:8080`
+- order-service：`http://localhost:8081`
+- inventory-service：`http://localhost:8082`
 
 ## 测试
 
@@ -180,7 +112,7 @@ Authorization: Bearer <token>
 mvn test
 ```
 
-当前已验证：
+当前 root 工程已验证：
 - `UserControllerTest`
 - `SnowflakeIdGeneratorTest`
 - `SeckillServiceImplTest`
@@ -190,16 +122,20 @@ mvn test
 
 说明：
 - `SeckillFlowIntegrationTest` 基于 Testcontainers 启动 MySQL、Redis、Kafka
-- 如果运行环境没有 Docker，该集成测试会自动跳过，不影响普通单元测试
+- 如果环境没有 Docker，该测试会自动跳过
 
-## 压测说明
+## 微服务拆分说明
 
-压测建议见 [docs/jmeter-guide.md](docs/jmeter-guide.md)。
-
-## 主从复制说明
-
-如果你需要实际演示主从读写分离，可以按照 [deploy/mysql/replication-setup.md](deploy/mysql/replication-setup.md) 完成复制绑定。
+- root 工程当前仍保留本地实现，作为单体兼容模式
+- 当微服务开关打开时，`OrderService` 和 `InventoryService` 会自动切换到远程实现
+- 这样可以同时保留本地开发效率和课程作业展示所需的微服务版本
+- `order-service` 当前负责消费 Kafka、创建订单、更新 Redis 秒杀结果
+- `inventory-service` 当前负责数据库库存查询和乐观锁扣减
+- 当前三服务默认仍共用 `flash_sale_system` 数据库，后续再演进为独立库
 
 ## 后续演进
 
-当前仓库已经完成课程作业版单体闭环、演示部署、Kafka 重试/死信骨架、基础主从复制脚本、真实链路集成测试和 Kafka 观测指标。下一步如果要继续推进，可以补主从自动绑定脚本，或继续拆订单与库存微服务。
+当前仓库已经完成第一版微服务拆分。下一步更适合继续推进的是：
+- 主从复制自动化绑定脚本
+- 微服务间统一鉴权与注册发现
+- 订单服务 / 库存服务独立数据库

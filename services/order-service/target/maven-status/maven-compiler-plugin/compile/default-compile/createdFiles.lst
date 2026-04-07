@@ -1,0 +1,15 @@
+com\flashsale\order\config\KafkaConfig.class
+com\flashsale\order\controller\InternalOrderController.class
+com\flashsale\order\dto\SeckillOrderMessage.class
+com\flashsale\order\config\MybatisPlusConfig.class
+com\flashsale\order\exception\BusinessException.class
+com\flashsale\order\service\SeckillRedisStatusService.class
+com\flashsale\order\entity\OrderInfo.class
+com\flashsale\order\mapper\OrderInfoMapper.class
+com\flashsale\order\OrderServiceApplication.class
+com\flashsale\order\service\OrderApplicationService.class
+com\flashsale\order\service\SeckillOrderConsumer.class
+com\flashsale\order\handler\GlobalExceptionHandler.class
+com\flashsale\order\service\InventoryRemoteClient.class
+com\flashsale\order\dto\OrderResponse.class
+com\flashsale\order\config\HttpClientConfig.class

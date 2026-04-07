@@ -8,12 +8,14 @@ import com.flashsale.exception.BusinessException;
 import com.flashsale.mapper.OrderInfoMapper;
 import com.flashsale.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "flash-sale.microservice", name = "enabled", havingValue = "false", matchIfMissing = true)
 public class OrderServiceImpl implements OrderService {
 
     private final OrderInfoMapper orderInfoMapper;

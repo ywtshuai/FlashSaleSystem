@@ -8,6 +8,7 @@ import com.flashsale.mapper.InventoryMapper;
 import com.flashsale.service.InventoryService;
 import com.flashsale.util.RedisKeyUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "flash-sale.microservice", name = "enabled", havingValue = "false", matchIfMissing = true)
 public class InventoryServiceImpl implements InventoryService {
 
     private static final String INIT_LOCK_VALUE = "1";

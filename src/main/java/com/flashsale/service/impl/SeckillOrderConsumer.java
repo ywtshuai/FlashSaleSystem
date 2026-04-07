@@ -8,6 +8,7 @@ import com.flashsale.service.SeckillMetricsService;
 import com.flashsale.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
@@ -18,6 +19,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(prefix = "flash-sale.microservice", name = "enabled", havingValue = "false", matchIfMissing = true)
 public class SeckillOrderConsumer {
 
     private final OrderService orderService;
