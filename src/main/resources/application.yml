@@ -60,14 +60,37 @@ jwt:
   secret: FlashSaleSystemJwtSecretKey2026FlashSaleSystem
   expiration: ${JWT_EXPIRATION:7200000}
 
+eureka:
+  client:
+    enabled: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+    register-with-eureka: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+    fetch-registry: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
 flash-sale:
   microservice:
     enabled: ${FLASH_SALE_MICROSERVICE_ENABLED:false}
+  discovery:
+    enabled: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+  internal-auth:
+    enabled: ${FLASH_SALE_INTERNAL_AUTH_ENABLED:true}
+    token: ${INTERNAL_SERVICE_TOKEN:FlashSaleInternalToken2026}
+    header-name: X-Internal-Token
+    service-name-header: X-Service-Name
+    allowed-services:
+      - user-product-service
+      - order-service
+      - inventory-service
   kafka:
     seckill-topic: flash-sale-seckill-topic
     seckill-dlt-topic: flash-sale-seckill-topic-dlt
     retry-interval: 1000
     max-attempts: 3
   services:
+    order-service-id: ${ORDER_SERVICE_ID:order-service}
     order-service-url: ${ORDER_SERVICE_URL:http://localhost:8081}
+    inventory-service-id: ${INVENTORY_SERVICE_ID:inventory-service}
     inventory-service-url: ${INVENTORY_SERVICE_URL:http://localhost:8082}

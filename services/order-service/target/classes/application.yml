@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: order-service
+    name: ${APP_NAME:order-service}
   datasource:
     driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
     url: ${DB_URL:jdbc:mysql://localhost:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
@@ -36,9 +36,31 @@ mybatis-plus:
     db-config:
       id-type: input
 
+eureka:
+  client:
+    enabled: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+    register-with-eureka: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+    fetch-registry: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
 flash-sale:
+  discovery:
+    enabled: ${FLASH_SALE_DISCOVERY_ENABLED:false}
+  internal-auth:
+    enabled: ${FLASH_SALE_INTERNAL_AUTH_ENABLED:true}
+    token: ${INTERNAL_SERVICE_TOKEN:FlashSaleInternalToken2026}
+    header-name: X-Internal-Token
+    service-name-header: X-Service-Name
+    allowed-services:
+      - user-product-service
+      - order-service
+      - inventory-service
   kafka:
     seckill-topic: ${SECKILL_TOPIC:flash-sale-seckill-topic}
     seckill-dlt-topic: ${SECKILL_DLT_TOPIC:flash-sale-seckill-topic-dlt}
   services:
+    inventory-service-id: ${INVENTORY_SERVICE_ID:inventory-service}
     inventory-service-url: ${INVENTORY_SERVICE_URL:http://localhost:8082}

@@ -6,6 +6,7 @@ import com.flashsale.entity.OrderInfo;
 import com.flashsale.exception.BusinessException;
 import com.flashsale.properties.FlashSaleServiceProperties;
 import com.flashsale.service.OrderService;
+import com.flashsale.service.ServiceEndpointResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
@@ -19,6 +20,7 @@ public class RemoteOrderServiceImpl implements OrderService {
 
     private final RestClient.Builder restClientBuilder;
     private final FlashSaleServiceProperties serviceProperties;
+    private final ServiceEndpointResolver serviceEndpointResolver;
 
     @Override
     public OrderInfo createOrder(Long orderId, Long userId, Long productId) {
@@ -77,6 +79,8 @@ public class RemoteOrderServiceImpl implements OrderService {
     }
 
     private RestClient restClient() {
-        return restClientBuilder.baseUrl(serviceProperties.getOrderServiceUrl()).build();
+        return restClientBuilder.baseUrl(serviceEndpointResolver.resolve(
+                serviceProperties.getOrderServiceId(),
+                serviceProperties.getOrderServiceUrl())).build();
     }
 }

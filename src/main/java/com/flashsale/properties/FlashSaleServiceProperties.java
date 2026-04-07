@@ -11,4 +11,6 @@ public class FlashSaleServiceProperties {
 
     private String orderServiceUrl;
     private String inventoryServiceUrl;
+    private String orderServiceId;
+    private String inventoryServiceId;
 }

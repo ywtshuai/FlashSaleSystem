@@ -4,6 +4,7 @@ import com.flashsale.entity.Inventory;
 import com.flashsale.exception.BusinessException;
 import com.flashsale.properties.FlashSaleServiceProperties;
 import com.flashsale.service.InventoryService;
+import com.flashsale.service.ServiceEndpointResolver;
 import com.flashsale.util.RedisKeyUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,6 +25,7 @@ public class RemoteInventoryServiceImpl implements InventoryService {
     private final RestClient.Builder restClientBuilder;
     private final FlashSaleServiceProperties serviceProperties;
     private final StringRedisTemplate redisTemplate;
+    private final ServiceEndpointResolver serviceEndpointResolver;
 
     @Override
     public Inventory getByProductId(Long productId) {
@@ -97,6 +99,8 @@ public class RemoteInventoryServiceImpl implements InventoryService {
     }
 
     private RestClient restClient() {
-        return restClientBuilder.baseUrl(serviceProperties.getInventoryServiceUrl()).build();
+        return restClientBuilder.baseUrl(serviceEndpointResolver.resolve(
+                serviceProperties.getInventoryServiceId(),
+                serviceProperties.getInventoryServiceUrl())).build();
     }
 }

@@ -1,8 +1,8 @@
 package com.flashsale.order.service;
 
 import com.flashsale.order.exception.BusinessException;
+import com.flashsale.order.properties.ServiceClientProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -12,12 +12,13 @@ import org.springframework.web.client.RestClient;
 public class InventoryRemoteClient {
 
     private final RestClient.Builder restClientBuilder;
-
-    @Value("${flash-sale.services.inventory-service-url}")
-    private String inventoryServiceUrl;
+    private final ServiceClientProperties serviceClientProperties;
+    private final ServiceEndpointResolver serviceEndpointResolver;
 
     public void deduct(Long productId) {
-        restClientBuilder.baseUrl(inventoryServiceUrl).build().post()
+        restClientBuilder.baseUrl(serviceEndpointResolver.resolve(
+                        serviceClientProperties.getInventoryServiceId(),
+                        serviceClientProperties.getInventoryServiceUrl())).build().post()
                 .uri("/internal/inventories/{productId}/deduct", productId)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (request, result) -> {
