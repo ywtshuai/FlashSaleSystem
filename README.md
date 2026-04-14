@@ -25,10 +25,12 @@
 - 创建订单记录
 - 更新 Redis 秒杀结果
 - 对外提供内部订单查询接口
+- 默认使用独立数据库 `flash_sale_order`
 
 ### 3. inventory-service
 - 独立维护库存表
 - 提供库存查询和库存扣减内部接口
+- 默认使用独立数据库 `flash_sale_inventory`
 
 ### 4. discovery-server
 - 提供 Eureka 注册中心
@@ -147,11 +149,12 @@ mvn test
 - `inventory-service` 当前负责数据库库存查询和乐观锁扣减
 - `discovery-server` 当前负责服务注册与实例发现
 - 内部接口统一由共享 token 进行服务间鉴权
-- 当前三服务默认仍共用 `flash_sale_system` 数据库，后续再演进为独立库
+- `user-product-service` 继续使用 `flash_sale_system`
+- `order-service` 使用独立库 `flash_sale_order`
+- `inventory-service` 使用独立库 `flash_sale_inventory`
 
 ## 后续演进
 
 当前仓库已经完成第一版微服务拆分。下一步更适合继续推进的是：
 - 主从复制自动化绑定脚本
-- 订单服务 / 库存服务独立数据库
 - 微服务独立测试集与跨服务集成测试

@@ -6,7 +6,7 @@ spring:
     name: ${APP_NAME:order-service}
   datasource:
     driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
-    url: ${DB_URL:jdbc:mysql://localhost:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/flash_sale_order?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:123456}
   data:
@@ -15,6 +15,10 @@ spring:
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DB:0}
       timeout: ${REDIS_TIMEOUT:3000ms}
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:

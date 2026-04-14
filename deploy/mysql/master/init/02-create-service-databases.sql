@@ -1,0 +1,7 @@
+CREATE DATABASE IF NOT EXISTS `flash_sale_order`
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE DATABASE IF NOT EXISTS `flash_sale_inventory`
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;

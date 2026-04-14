@@ -144,7 +144,7 @@ services:
       FLASH_SALE_INTERNAL_AUTH_ENABLED: true
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka
       INTERNAL_SERVICE_TOKEN: FlashSaleInternalToken2026
-      DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_inventory?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
       DB_USERNAME: root
       DB_PASSWORD: 123456
     ports:
@@ -166,7 +166,7 @@ services:
       FLASH_SALE_INTERNAL_AUTH_ENABLED: true
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka
       INTERNAL_SERVICE_TOKEN: FlashSaleInternalToken2026
-      DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      DB_URL: jdbc:mysql://mysql-master:3306/flash_sale_order?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
       DB_USERNAME: root
       DB_PASSWORD: 123456
       REDIS_HOST: redis

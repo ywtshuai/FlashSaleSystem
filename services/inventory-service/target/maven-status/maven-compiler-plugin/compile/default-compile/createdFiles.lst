@@ -1,11 +1,11 @@
 com\flashsale\inventory\mapper\InventoryMapper.class
-com\flashsale\inventory\interceptor\InternalRequestAuthInterceptor.class
 com\flashsale\inventory\exception\BusinessException.class
 com\flashsale\inventory\entity\Inventory.class
 com\flashsale\inventory\properties\InternalAuthProperties.class
 com\flashsale\inventory\service\InventoryApplicationService.class
 com\flashsale\inventory\config\WebMvcConfig.class
 com\flashsale\inventory\config\MybatisPlusConfig.class
+com\flashsale\inventory\interceptor\InternalRequestAuthInterceptor.class
 com\flashsale\inventory\controller\InternalInventoryController.class
 com\flashsale\inventory\handler\GlobalExceptionHandler.class
 com\flashsale\inventory\InventoryServiceApplication.class
